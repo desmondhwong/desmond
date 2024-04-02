@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 961.43"><title>23-jiji</title><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><path d="M0,956.8V903.31A187.26,187.26,0,0,0,30.39,906c39.64,0,46.9-16.52,46.9-55.48v-391h56.8v396.3c0,68-27.11,105.69-91.17,105.69A216.29,216.29,0,0,1,0,956.8"/><path d="M65.4,347.14a40.29,40.29,0,1,1,40.29,40.31A40,40,0,0,1,65.4,347.14"/><rect x="280.59" y="375.4" width="56.79" height="350.08" transform="translate(-298.72 379.71) rotate(-45)"/><path d="M715.37,452.83H661.88a187.1,187.1,0,0,0,2.63-30.39c0-39.64-16.51-46.9-55.48-46.9H218v-56.8H614.3c68,0,105.7,27.11,105.7,91.17a216.22,216.22,0,0,1-4.63,42.92"/><rect x="133.95" y="115.45" width="350.08" height="56.79" transform="translate(-11.22 260.62) rotate(-45)"/></g></g></svg>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 96.2 72" style="enable-background:new 0 0 96.2 72;" xml:space="preserve">
+<title>jiji</title>
+<path d="M0.5,0h5.3C5.6,1,5.6,2,5.6,3c0,4,1.6,4.7,5.6,4.7h39.1v5.7H10.6C3.8,13.4,0,10.7,0,4.3C0,2.8,0.2,1.4,0.5,0z"/>
+<path d="M61.4,6.5c2.2,0,4,1.8,4,4s-1.8,4-4,4s-4-1.8-4-4S59.2,6.5,61.4,6.5z"/>
+<rect x="23.6" y="28.1" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -9.8152 38.1147)" width="35" height="5.7"/>
+<path d="M50.9,71.5v-5.3c1,0.2,2,0.3,3,0.3c4,0,4.7-1.7,4.7-5.6V21.8h5.7v39.6c0,6.8-2.7,10.6-9.1,10.6C53.7,72,52.3,71.8,50.9,71.5
+	z"/>
+<rect x="78.9" y="13.4" transform="matrix(0.7071 -0.7071 0.7071 0.7071 2.0998 66.8639)" width="5.7" height="35"/>
+</svg>
