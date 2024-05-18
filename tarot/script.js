@@ -117,14 +117,14 @@ function selectSignificator() {
     deck = deck.filter(card => card.name !== selectedCardName);
 
     const cardElement = document.getElementById('card1');
-    cardElement.innerHTML = `<div class="card-name">${significator.name}</div><div class="orientation">Upright</div>`;
+    cardElement.innerHTML = `<div class="card-name">${significator.name}</div>`;
     cardElement.style.display = 'flex';
 
     const descriptionElement = document.getElementById('description');
     descriptionElement.innerHTML = `
         <h3>Significator</h3>
         <p><strong>This card represents the significator, setting the stage for the reading.</strong></p>
-        <p><strong>${significator.name}</strong> (Upright): ${significator.meaning_upright}</p>
+        <p><strong>${significator.name}</strong>: ${significator.meaning_upright}</p>
     `;
 
     document.getElementById('draw-button').disabled = false;
@@ -150,7 +150,7 @@ function drawNextCard() {
 
     const position = currentCardIndex + 1;
     const cardElement = document.getElementById(`card${position}`);
-    cardElement.innerHTML = `<div class="card-name">${card.name}</div><div class="orientation">${orientation}</div>`;
+    cardElement.innerHTML = `<div class="card-name${isReversed ? ' reversed' : ''}">${card.name}</div>`;
     cardElement.style.display = 'flex';
 
     showDescription(card, isReversed, position);
@@ -169,7 +169,7 @@ function showDescription(card, isReversed, position) {
     descriptionElement.innerHTML += `
         <h3>${position}. ${spreadInfo.header}</h3>
         <p><strong>${spreadInfo.explanation}</strong></p>
-        <p><strong>${card.name}</strong> (${isReversed ? 'Reversed' : 'Upright'}): ${meaning}</p>
+        <p><strong>${card.name}</strong>${isReversed ? ' (Reversed)' : ''}: ${meaning}</p>
     `;
 }
 
@@ -232,20 +232,20 @@ function recreateSpread(spreadState) {
     dropdown.disabled = true;
 
     const cardElement = document.getElementById('card1');
-    cardElement.innerHTML = `<div class="card-name">${significator.name}</div><div class="orientation">Upright</div>`;
+    cardElement.innerHTML = `<div class="card-name">${significator.name}</div>`;
     cardElement.style.display = 'flex';
 
     const descriptionElement = document.getElementById('description');
     descriptionElement.innerHTML = `
         <h3>Significator</h3>
         <p><strong>This card represents the significator, setting the stage for the reading.</strong></p>
-        <p><strong>${significator.name}</strong> (Upright): ${significator.meaning_upright}</p>
+        <p><strong>${significator.name}</strong>: ${significator.meaning_upright}</p>
     `;
 
     drawnCards.forEach((card, index) => {
         const position = index + 1;
         const cardElement = document.getElementById(`card${position}`);
-        cardElement.innerHTML = `<div class="card-name">${card.name}</div><div class="orientation">${card.orientation}</div>`;
+        cardElement.innerHTML = `<div class="card-name${card.orientation === 'Reversed' ? ' reversed' : ''}">${card.name}</div>`;
         cardElement.style.display = 'flex';
         showDescription(card, card.orientation === 'Reversed', position);
     });
