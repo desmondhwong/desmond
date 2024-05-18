@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Tarot</h1>
+    <div>
+        <label for="significator">Select the Significator:</label>
+        <select id="significator" onchange="selectSignificator()">
+            <option value="">-- Select Significator --</option>
+            <!-- Options will be populated by JavaScript -->
+        </select>
+    </div>
+    <div id="spread">
+        <div id="card1" class="card"></div>
+        <div id="card2" class="card rotated"></div>
+        <div id="card3" class="card"></div>
+        <div id="card4" class="card"></div>
+        <div id="card5" class="card"></div>
+        <div id="card6" class="card"></div>
+        <div id="card7" class="card"></div>
+        <div id="card8" class="card"></div>
+        <div id="card9" class="card"></div>
+        <div id="card10" class="card"></div>
+    </div>
+    <div>
+        <button id="draw-button" onclick="drawNextCard()" disabled>Draw Card</button>
+        <button id="reset-button" onclick="resetSpread()" style="display: none;">Reset Spread</button>
+        <button id="share-button" onclick="generateShareableURL()" style="display: none;">Share Spread</button>
+    </div>
+    <div id="description"></div>
+    <script src="script.js"></script>
+</body>
+</html>
