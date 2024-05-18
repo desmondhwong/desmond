@@ -9,6 +9,21 @@
 <body>
     <h1>Tarot</h1>
     <div>
+        <label for="font-select">Select Font:</label>
+        <select id="font-select" onchange="changeFont()">
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
+            <option value="'Verdana', Geneva, sans-serif">Verdana</option>
+            <option value="'Lucida Console', Monaco, monospace">Lucida Console</option>
+            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+            <option value="'Impact', Charcoal, sans-serif">Impact</option>
+            <option value="'Palatino Linotype', 'Book Antiqua', Palatino, serif">Palatino Linotype</option>
+        </select>
+    </div>
+    <div>
         <label for="significator">Select the Significator:</label>
         <select id="significator" onchange="selectSignificator()">
             <option value="">-- Select Significator --</option>
@@ -28,11 +43,28 @@
         <div id="card10" class="card"></div>
     </div>
     <div id="buttons">
-        <button id="draw-button" onclick="drawNextCard()" disabled>Draw Card</button>
-        <button id="reset-button" onclick="resetSpread()" style="display: none;">Reset Spread</button>
-        <button id="share-button" onclick="generateShareableURL()" style="display: none;">Share Spread</button>
+        <button id="draw-button" onclick="drawNextCard()" disabled>Draw</button>
+        <button id="shuffle-button">Shuffle</button>
+        <button id="reading-button" style="display: none;">Reading</button>
+        <button id="stats-button" onclick="showStatistics()" style="display: none;">Statistics</button>
+        <button id="share-button" onclick="generateShareableURL()" style="display: none;">Save</button>
+        <button id="reset-button" onclick="resetSpread()" style="display: none;">Reset</button>
     </div>
     <div id="description"></div>
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Reading Statistics</h2>
+            <p id="stats-content"></p>
+        </div>
+    </div>
+    <div id="reading-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReadingModal()">&times;</span>
+            <div id="reading-content"></div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

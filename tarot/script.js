@@ -14,6 +14,30 @@ const spreadPositions = [
 const base62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const cardMap = {};
 const reverseCardMap = {};
+const fontMap = {
+    "Arial, sans-serif": "00",
+    "'Courier New', Courier, monospace": "01",
+    "'Georgia', serif": "02",
+    "'Times New Roman', Times, serif": "03",
+    "'Trebuchet MS', Helvetica, sans-serif": "04",
+    "'Verdana', Geneva, sans-serif": "05",
+    "'Lucida Console', Monaco, monospace": "06",
+    "'Comic Sans MS', cursive, sans-serif": "07",
+    "'Impact', Charcoal, sans-serif": "08",
+    "'Palatino Linotype', 'Book Antiqua', Palatino, serif": "09"
+};
+const reverseFontMap = {
+    "00": "Arial, sans-serif",
+    "01": "'Courier New', Courier, monospace",
+    "02": "'Georgia', serif",
+    "03": "'Times New Roman', Times, serif",
+    "04": "'Trebuchet MS', Helvetica, sans-serif",
+    "05": "'Verdana', Geneva, sans-serif",
+    "06": "'Lucida Console', Monaco, monospace",
+    "07": "'Comic Sans MS', cursive, sans-serif",
+    "08": "'Impact', Charcoal, sans-serif",
+    "09": "'Palatino Linotype', 'Book Antiqua', Palatino, serif"
+};
 
 function initializeCardMap() {
     let index = 0;
@@ -41,9 +65,10 @@ function decodeBase62(string) {
 }
 
 function encodeSpreadState(spreadState) {
+    const fontId = fontMap[spreadState.font];
     const significatorId = cardMap[spreadState.significator];
-    if (!significatorId) {
-        console.error(`Significator "${spreadState.significator}" not found in cardMap.`);
+    if (!fontId || !significatorId) {
+        console.error(`Font "${spreadState.font}" or Significator "${spreadState.significator}" not found.`);
         return '';
     }
     const drawnCardsIds = spreadState.drawnCards.map(card => {
@@ -55,18 +80,20 @@ function encodeSpreadState(spreadState) {
         const orientationId = card.orientation === 'Upright' ? 'U' : 'R';
         return cardId + orientationId;
     }).join('');
-    return significatorId + drawnCardsIds;
+    return fontId + significatorId + drawnCardsIds;
 }
 
 function decodeSpreadState(encodedState) {
-    const significatorId = encodedState.substring(0, 2);
+    const fontId = encodedState.substring(0, 2);
+    const font = reverseFontMap[fontId];
+    const significatorId = encodedState.substring(2, 4);
     const significator = reverseCardMap[significatorId];
-    if (!significator) {
-        console.error(`Significator ID "${significatorId}" not found in reverseCardMap.`);
-        return { significator: null, drawnCards: [] };
+    if (!font || !significator) {
+        console.error(`Font ID "${fontId}" or Significator ID "${significatorId}" not found.`);
+        return { font: null, significator: null, drawnCards: [] };
     }
     const drawnCards = [];
-    for (let i = 2; i < encodedState.length; i += 3) {
+    for (let i = 4; i < encodedState.length; i += 3) {
         const cardId = encodedState.substring(i, i + 2);
         const orientationId = encodedState.charAt(i + 2);
         const cardName = reverseCardMap[cardId];
@@ -77,13 +104,14 @@ function decodeSpreadState(encodedState) {
         const orientation = orientationId === 'U' ? 'Upright' : 'Reversed';
         drawnCards.push({ name: cardName, orientation });
     }
-    return { significator, drawnCards };
+    return { font, significator, drawnCards };
 }
 
 let deck = [];
 let drawnCards = [];
 let currentCardIndex = 0;
 let significator = null;
+let selectedFont = "Arial, sans-serif";
 
 async function fetchDeck() {
     const response = await fetch('tarot_deck.json');
@@ -133,12 +161,13 @@ function selectSignificator() {
 
 function drawNextCard() {
     if (currentCardIndex >= 10) {
-        alert("All cards have been drawn.");
+        document.getElementById('draw-button').disabled = true;
         return;
     }
 
     if (currentCardIndex === 0) {
         document.getElementById('significator').disabled = true;
+        document.getElementById('font-select').disabled = true; // Disable font select
     }
 
     const cardIndex = Math.floor(Math.random() * deck.length);
@@ -158,8 +187,13 @@ function drawNextCard() {
 
     if (currentCardIndex >= 10) {
         document.getElementById('share-button').style.display = 'inline-block';
+        document.getElementById('stats-button').style.display = 'inline-block';
+        document.getElementById('reading-button').style.display = 'inline-block';
+        document.getElementById('shuffle-button').disabled = true; // Disable shuffle button
+        document.getElementById('draw-button').disabled = true; // Disable draw button
     }
 }
+
 
 function showDescription(card, isReversed, position) {
     const descriptionElement = document.getElementById("description");
@@ -175,6 +209,7 @@ function showDescription(card, isReversed, position) {
 
 function generateShareableURL() {
     const spreadState = {
+        font: selectedFont,
         significator: significator.name,
         drawnCards: drawnCards.map(card => ({
             name: card.name,
@@ -185,13 +220,13 @@ function generateShareableURL() {
     if (encodedSpread) {
         const shareableURL = `${window.location.origin}${window.location.pathname}#${encodedSpread}`;
         navigator.clipboard.writeText(shareableURL).then(() => {
-            alert("Shareable URL copied to clipboard!");
+            alert("Permalink copied to clipboard.");
         }).catch(err => {
             console.error("Failed to copy URL: ", err);
             alert("Failed to copy URL. Please try again.");
         });
     } else {
-        alert("Error generating shareable URL. Please try again.");
+        alert("Error generating permalink. Please try again.");
     }
 }
 
@@ -214,6 +249,12 @@ function recreateSpread(spreadState) {
         console.error("Invalid significator in saved spread state.");
         return;
     }
+    selectedFont = spreadState.font;
+
+    // Apply the saved font
+    document.body.style.fontFamily = selectedFont;
+    document.getElementById('font-select').value = selectedFont;
+
     significator = deck.find(card => card.name === spreadState.significator);
     deck = deck.filter(card => card.name !== spreadState.significator);
     drawnCards = spreadState.drawnCards.map(card => {
@@ -251,21 +292,36 @@ function recreateSpread(spreadState) {
     });
 
     document.getElementById('draw-button').disabled = true;
+    document.getElementById('font-select').disabled = true; // Disable font select
     document.getElementById('share-button').style.display = 'inline-block';
     document.getElementById('reset-button').style.display = 'inline-block';
+    document.getElementById('stats-button').style.display = 'inline-block';
+
+    // Disable shuffle and draw buttons when recreating from URL
+    document.getElementById('shuffle-button').disabled = true;
+    document.getElementById('draw-button').disabled = true; 
+
+    // Show reading button when recreating from URL
+    document.getElementById('reading-button').style.display = 'inline-block';
 }
 
-// Function to reset the spread (optional)
+
 function resetSpread() {
     drawnCards = [];
     currentCardIndex = 0;
     significator = null;
+    selectedFont = "Arial, sans-serif";
     document.getElementById("description").innerHTML = "";
     document.getElementById("significator").value = "";
     document.getElementById("significator").disabled = false;
+    document.getElementById("font-select").disabled = false; // Enable font select
     document.getElementById("draw-button").disabled = true;
     document.getElementById("share-button").style.display = 'none';
     document.getElementById("reset-button").style.display = 'none';
+    document.getElementById("stats-button").style.display = 'none';
+    document.getElementById('shuffle-button').disabled = false; // Enable shuffle button
+    document.getElementById('reading-button').style.display = 'none'; // Hide reading button
+
     window.location.hash = '';
 
     for (let i = 1; i <= 10; i++) {
@@ -275,6 +331,143 @@ function resetSpread() {
     }
 
     fetchDeck(); // Reload the deck with all cards (optional)
+}
+
+function changeFont() {
+    const fontSelect = document.getElementById('font-select');
+    const font = fontSelect.value;
+    if (font) {
+        selectedFont = font;
+        document.body.style.fontFamily = font;
+    }
+}
+
+function showStatistics() {
+    const stats = {
+        majorArcana: 0,
+        minorArcana: 0,
+        swords: 0,
+        wands: 0,
+        cups: 0,
+        pentacles: 0,
+        upright: 0,
+        reversed: 0,
+        courtCards: 0
+    };
+
+    const majorArcanaNames = [
+        "The Fool", "The Magician", "The High Priestess", "The Empress", "The Emperor", "The Hierophant", 
+        "The Lovers", "The Chariot", "Strength", "The Hermit", "Wheel of Fortune", "Justice", "The Hanged Man", 
+        "Death", "Temperance", "The Devil", "The Tower", "The Star", "The Moon", "The Sun", "Judgement", "The World"
+    ];
+
+    const courtCardNames = ["Page", "Knight", "Queen", "King"];
+    
+    [significator, ...drawnCards].forEach(card => {
+        if (majorArcanaNames.includes(card.name)) {
+            stats.majorArcana++;
+        } else {
+            stats.minorArcana++;
+            if (card.name.includes("Swords")) stats.swords++;
+            if (card.name.includes("Wands")) stats.wands++;
+            if (card.name.includes("Cups")) stats.cups++;
+            if (card.name.includes("Pentacles")) stats.pentacles++;
+
+            const cardNumber = card.name.split(" ")[0];
+            if (!isNaN(cardNumber)) {
+                stats.numbers = stats.numbers || {};
+                stats.numbers[cardNumber] = (stats.numbers[cardNumber] || 0) + 1;
+            } else if (courtCardNames.includes(cardNumber)) {
+                stats.courtCards++;
+            }
+        }
+        if (card.orientation === 'Upright') stats.upright++;
+        if (card.orientation === 'Reversed') stats.reversed++;
+    });
+
+    const statsContent = `
+        Major Arcana: ${stats.majorArcana}<br>
+        Minor Arcana: ${stats.minorArcana}<br>
+        Swords (Air): ${stats.swords}<br>
+        Wands (Fire): ${stats.wands}<br>
+        Cups (Water): ${stats.cups}<br>
+        Pentacles (Earth): ${stats.pentacles}<br>
+        Upright: ${stats.upright}<br>
+        Reversed: ${stats.reversed}<br>
+        Court Cards: ${stats.courtCards}<br>
+        ${stats.numbers ? Object.entries(stats.numbers).map(([num, count]) => `Number ${num}s: ${count}<br>`).join('') : ''}
+    `;
+
+    document.getElementById('stats-content').innerHTML = statsContent;
+    document.getElementById('stats-modal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('stats-modal').style.display = 'none';
+}
+
+function showReading() {
+    // Collect the meanings and replace ' and ' with ', ' and convert to lowercase
+    let meanings = drawnCards.map(card => {
+        let meaning = card.orientation === 'Reversed' ? card.meaning_reversed : card.meaning_upright;
+        return meaning.replace(/ and /g, ', ').toLowerCase();
+    }).join(', ');
+
+    // Remove any instances of '. ,' and ensure proper punctuation
+    meanings = meanings.replace(/,\s*,/g, ','); // Remove double commas
+    meanings = meanings.replace(/,\s*\./g, ','); // Remove commas before periods
+    meanings = meanings.replace(/\.\s*,/g, ','); // Remove periods before commas
+    meanings = meanings.replace(/\.\s*$/, ''); // Remove trailing period if any
+
+    // Capitalize the first letter of the entire text
+    meanings = meanings.charAt(0).toUpperCase() + meanings.slice(1);
+
+    // Add a single period at the end
+    meanings = meanings + '.';
+
+    document.getElementById('reading-content').innerText = meanings;
+    document.getElementById('reading-modal').style.display = 'block';
+}
+
+function closeReadingModal() {
+    document.getElementById('reading-modal').style.display = 'none';
+}
+
+// Add event listener for the shuffle button
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('shuffle-button').addEventListener('click', shuffleDeck);
+});
+
+// Add event listener for the reading button
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('reading-button').addEventListener('click', showReading);
+});
+
+// Shuffle the deck using a random seed
+function shuffleDeck() {
+    const seed = Math.random(); // Generate a random seed
+    deck = shuffleArray(deck, seed);
+    alert('Deck shuffled.');
+}
+
+// Helper function to shuffle an array using a seed
+function shuffleArray(array, seed) {
+    const rng = mulberry32(seed * 0xFFFFFF);
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Seed-based random number generator
+function mulberry32(a) {
+    return function() {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
 }
 
 // Fetch the deck when the page loads
