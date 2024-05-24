@@ -131,7 +131,7 @@ function populateSignificatorDropdown() {
 
     const defaultOption = document.createElement('option');
     defaultOption.value = "";
-    defaultOption.textContent = "---";
+    defaultOption.textContent = "--";
     dropdown.appendChild(defaultOption);
 
     // Add The Magician and The High Priestess at the top
@@ -144,12 +144,6 @@ function populateSignificatorDropdown() {
         dropdown.appendChild(option);
     });
 
-    // Add a horizontal rule
-    const hr = document.createElement('option');
-    hr.disabled = true;
-    hr.textContent = '---';
-    dropdown.appendChild(hr);
-
     // Add the rest of the cards
     originalDeck.forEach(card => {
         if (!specialCards.includes(card.name)) {
@@ -160,7 +154,6 @@ function populateSignificatorDropdown() {
         }
     });
 }
-
 
 function selectSignificator() {
     const dropdown = document.getElementById('significator');
