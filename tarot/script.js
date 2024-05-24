@@ -39,6 +39,24 @@ const reverseFontMap = {
     "09": "'Palatino Linotype', 'Book Antiqua', Palatino, serif"
 };
 
+let deck = [];
+let drawnCards = [];
+let currentCardIndex = 0;
+let significator = null;
+let selectedFont = "Arial, sans-serif";
+let paymentCompleted = false;
+let originalDeck = [];
+let significatorLocked = false;
+
+async function fetchDeck() {
+    const response = await fetch('tarot_deck.json');
+    deck = await response.json();
+    originalDeck = [...deck];  // Store the original deck
+    initializeCardMap();
+    populateSignificatorDropdown();
+    checkForSavedSpread();
+}
+
 function initializeCardMap() {
     let index = 0;
     deck.forEach(card => {
@@ -107,42 +125,63 @@ function decodeSpreadState(encodedState) {
     return { font, significator, drawnCards };
 }
 
-let deck = [];
-let drawnCards = [];
-let currentCardIndex = 0;
-let significator = null;
-let selectedFont = "Arial, sans-serif";
-
-async function fetchDeck() {
-    const response = await fetch('tarot_deck.json');
-    deck = await response.json();
-    initializeCardMap();
-    populateSignificatorDropdown();
-    checkForSavedSpread();
-}
-
 function populateSignificatorDropdown() {
     const dropdown = document.getElementById('significator');
-    const magicianAndHighPriestess = deck.filter(card => card.name === "The Magician" || card.name === "The High Priestess");
-    const otherCards = deck.filter(card => card.name !== "The Magician" && card.name !== "The High Priestess");
+    dropdown.innerHTML = '';  // Clear existing options
 
-    const sortedDeck = [...magicianAndHighPriestess, ...otherCards];
+    const defaultOption = document.createElement('option');
+    defaultOption.value = "";
+    defaultOption.textContent = "---";
+    dropdown.appendChild(defaultOption);
 
-    sortedDeck.forEach(card => {
+    // Add The Magician and The High Priestess at the top
+    const specialCards = ["The Magician", "The High Priestess"];
+    specialCards.forEach(cardName => {
+        const card = originalDeck.find(c => c.name === cardName);
         const option = document.createElement('option');
         option.value = card.name;
         option.textContent = card.name;
         dropdown.appendChild(option);
     });
+
+    // Add a horizontal rule
+    const hr = document.createElement('option');
+    hr.disabled = true;
+    hr.textContent = '---';
+    dropdown.appendChild(hr);
+
+    // Add the rest of the cards
+    originalDeck.forEach(card => {
+        if (!specialCards.includes(card.name)) {
+            const option = document.createElement('option');
+            option.value = card.name;
+            option.textContent = card.name;
+            dropdown.appendChild(option);
+        }
+    });
 }
+
 
 function selectSignificator() {
     const dropdown = document.getElementById('significator');
     const selectedCardName = dropdown.value;
-    if (!selectedCardName) return;
+    if (!selectedCardName) {
+        // Clear the card display and description if no card is selected
+        const cardElement = document.getElementById('card1');
+        cardElement.innerHTML = '';
+        cardElement.style.display = 'none';
 
-    significator = deck.find(card => card.name === selectedCardName);
-    deck = deck.filter(card => card.name !== selectedCardName);
+        const descriptionElement = document.getElementById('description');
+        descriptionElement.innerHTML = '';
+        document.getElementById('draw-button').disabled = true;
+        document.getElementById('shuffle-button').disabled = true;
+        return;
+    }
+
+    // Restore the deck from the original deck
+    deck = originalDeck.filter(card => card.name !== selectedCardName);
+
+    significator = originalDeck.find(card => card.name === selectedCardName);
 
     const cardElement = document.getElementById('card1');
     cardElement.innerHTML = `<div class="card-name">${significator.name}</div>`;
@@ -155,8 +194,15 @@ function selectSignificator() {
         <p><strong>${significator.name}</strong>: ${significator.meaning_upright}</p>
     `;
 
+    // Enable the draw and shuffle buttons only after a significator is selected
     document.getElementById('draw-button').disabled = false;
-    document.getElementById('reset-button').style.display = 'inline-block';
+    document.getElementById('shuffle-button').disabled = false;
+
+    // Prevent selecting the initial blank "--" option again
+    const blankOption = dropdown.querySelector('option[value=""]');
+    if (blankOption) {
+        blankOption.disabled = true;
+    }
 }
 
 function drawNextCard() {
@@ -166,13 +212,13 @@ function drawNextCard() {
     }
 
     if (currentCardIndex === 0) {
-        document.getElementById('significator').disabled = true;
-        document.getElementById('font-select').disabled = true; // Disable font select
+        lockSelections();
+        document.getElementById('reset-button').style.display = 'inline-block'; // Show the reset button
     }
 
-    const cardIndex = Math.floor(Math.random() * deck.length);
+    const cardIndex = Math.floor(paymentCompleted ? secureRandom() * deck.length : Math.random() * deck.length);
     const card = deck.splice(cardIndex, 1)[0];
-    const isReversed = Math.random() < 0.5;
+    const isReversed = paymentCompleted ? secureRandom() < 0.5 : Math.random() < 0.5;
     const orientation = isReversed ? 'Reversed' : 'Upright';
 
     drawnCards.push({ ...card, orientation });
@@ -191,9 +237,25 @@ function drawNextCard() {
         document.getElementById('reading-button').style.display = 'inline-block';
         document.getElementById('shuffle-button').disabled = true; // Disable shuffle button
         document.getElementById('draw-button').disabled = true; // Disable draw button
+
+        if (!paymentCompleted) {
+            document.getElementById('share-button').disabled = true;
+            document.getElementById('stats-button').disabled = true;
+            document.getElementById('reading-button').disabled = true;
+        } else {
+            document.getElementById('share-button').disabled = false;
+            document.getElementById('stats-button').disabled = false;
+            document.getElementById('reading-button').disabled = false;
+        }
     }
 }
 
+function lockSelections() {
+    document.getElementById('significator').disabled = true;
+    document.getElementById('font-select').disabled = true;
+    document.getElementById('pay-button').disabled = true;
+    significatorLocked = true;
+}
 
 function showDescription(card, isReversed, position) {
     const descriptionElement = document.getElementById("description");
@@ -220,10 +282,10 @@ function generateShareableURL() {
     if (encodedSpread) {
         const shareableURL = `${window.location.origin}${window.location.pathname}#${encodedSpread}`;
         navigator.clipboard.writeText(shareableURL).then(() => {
-            alert("Permalink copied to clipboard.");
+            alert("Reading permalink copied to clipboard.");
         }).catch(err => {
             console.error("Failed to copy URL: ", err);
-            alert("Failed to copy URL. Please try again.");
+            alert("Failed to copy reading permalink. Please try again.");
         });
     } else {
         alert("Error generating permalink. Please try again.");
@@ -235,6 +297,15 @@ function checkForSavedSpread() {
     if (hash) {
         const spreadState = decodeSpreadState(hash);
         recreateSpread(spreadState);
+        paymentCompleted = true;
+        document.getElementById('pay-button').disabled = true;
+        document.getElementById('pay-button').innerText = "Unlocked";
+        document.querySelector('h1').innerText = "True Tarot";
+    } else {
+        // Set initial state for free mode
+        document.querySelector('h1').innerText = "Free Tarot";
+        document.getElementById('font-select').disabled = false;
+        document.getElementById('significator').disabled = false;
     }
 }
 
@@ -303,14 +374,17 @@ function recreateSpread(spreadState) {
 
     // Show reading button when recreating from URL
     document.getElementById('reading-button').style.display = 'inline-block';
+    document.getElementById('share-button').disabled = false;
+    document.getElementById('stats-button').disabled = false;
+    document.getElementById('reading-button').disabled = false;
 }
-
 
 function resetSpread() {
     drawnCards = [];
     currentCardIndex = 0;
     significator = null;
     selectedFont = "Arial, sans-serif";
+    significatorLocked = false;
     document.getElementById("description").innerHTML = "";
     document.getElementById("significator").value = "";
     document.getElementById("significator").disabled = false;
@@ -319,8 +393,12 @@ function resetSpread() {
     document.getElementById("share-button").style.display = 'none';
     document.getElementById("reset-button").style.display = 'none';
     document.getElementById("stats-button").style.display = 'none';
-    document.getElementById('shuffle-button').disabled = false; // Enable shuffle button
+    document.getElementById('shuffle-button').disabled = true; // Disable shuffle button
     document.getElementById('reading-button').style.display = 'none'; // Hide reading button
+    document.getElementById('paypal-button-container').style.display = 'block'; // Re-enable pay button
+    document.querySelector('h1').innerText = "Free Tarot";
+    document.getElementById('pay-button').disabled = false;
+    document.getElementById('pay-button').innerText = "Unlock";
 
     window.location.hash = '';
 
@@ -443,9 +521,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('reading-button').addEventListener('click', showReading);
 });
 
-// Shuffle the deck using a random seed
+// Shuffle the deck using Math.random or secureRandom based on payment status
 function shuffleDeck() {
-    const seed = Math.random(); // Generate a random seed
+    if (!significatorLocked) {
+        lockSelections();
+        document.getElementById('reset-button').style.display = 'inline-block'; // Show the reset button
+    }
+    const seed = paymentCompleted ? secureRandom() : Math.random(); // Use secureRandom if payment is completed
     deck = shuffleArray(deck, seed);
     alert('Deck shuffled.');
 }
@@ -470,5 +552,87 @@ function mulberry32(a) {
     };
 }
 
+// Generate secure random values using Web Crypto API
+function secureRandom() {
+    // Create a Uint32Array with eight elements to get 256 bits of randomness
+    let array = new Uint32Array(8);
+    // Fill the array with cryptographically secure random values
+    window.crypto.getRandomValues(array);
+    // Combine the eight 32-bit values to create a 256-bit value
+    let random256bit = 0n;
+    for (let i = 0; i < array.length; i++) {
+        random256bit = (random256bit << 32n) | BigInt(array[i]);
+    }
+    return Number(random256bit % BigInt(2 ** 53)) / (2 ** 53); // Normalize to [0, 1)
+}
+
 // Fetch the deck when the page loads
-window.onload = fetchDeck;
+window.onload = function() {
+    fetchDeck();
+    document.getElementById('significator').value = "";  // Set default value to empty
+    document.getElementById('draw-button').disabled = true;
+    document.getElementById('shuffle-button').disabled = true;
+};
+
+// Function to show the PayPal modal
+function showPayPalModal() {
+    document.getElementById('paypal-modal').style.display = 'block';
+}
+
+// Function to close the PayPal modal
+function closePayPalModal() {
+    document.getElementById('paypal-modal').style.display = 'none';
+}
+
+// Add the PayPal button rendering script
+paypal.Buttons({
+    style: {
+        layout: 'vertical',
+        color: 'black',
+        shape: 'pill',
+        label: 'paypal',
+        height: 40
+    },
+    createOrder: function(data, actions) {
+        return actions.order.create({
+            purchase_units: [{
+                amount: {
+                    value: '1.00'
+                }
+            }]
+        });
+    },
+    onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+            console.log('Payment approved: ', details);
+            paymentCompleted = true;
+            enableControls();
+            closePayPalModal();
+            disablePayButton();
+            document.querySelector('h1').innerText = "True Tarot";
+            document.getElementById('pay-button').innerText = "Unlocked";
+        });
+    },
+    onError: function(err) {
+        console.error('Payment error: ', err);
+        alert('There was an error processing your payment. Please try again.');
+    }
+}).render('#paypal-button-container');
+
+// Function to enable all controls after payment
+function enableControls() {
+    document.getElementById('font-select').disabled = false;
+    document.getElementById('significator').disabled = false;
+    document.getElementById('share-button').disabled = false;
+    document.getElementById('stats-button').disabled = false;
+    document.getElementById('reading-button').disabled = false;
+    alert('Payment successful. True tarot reading unlocked.');
+}
+
+function disablePayButton() {
+    document.getElementById('pay-button').disabled = true;
+}
+
+function enablePayButton() {
+    document.getElementById('pay-button').disabled = false;
+}

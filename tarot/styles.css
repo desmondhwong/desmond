@@ -124,6 +124,7 @@ body {
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
+    max-width: 600px; /* Ensure the modal doesn't get too wide */
     text-align: center;
 }
 
@@ -143,10 +144,22 @@ body {
 
 #stats-modal .modal-content {
     max-width: 400px; /* Max width for stats modal */
+    text-align: left; /* Align text to the left */
 }
 
 #reading-modal .modal-content {
     max-width: 600px; /* Max width for reading modal */
+    text-align: left; /* Align text to the left */
+}
+
+#paypal-modal .modal-content p {
+    text-align: left;
+}
+
+/* Center the headers of the modals */
+#reading-modal .modal-content h2,
+#stats-modal .modal-content h2 {
+    text-align: center;
 }
 
 #stats-content {
@@ -154,7 +167,6 @@ body {
     max-width: 350px; /* Set maximum width for stats content */
     margin: 0 auto; /* Center the content */
     line-height: 1.2; /* Set line height for readability */
-    text-align: left; /* Align text to the left */
 }
 
 #reading-content {
@@ -162,5 +174,15 @@ body {
     max-width: 500px; /* Set maximum width for reading content */
     margin: 0 auto; /* Center the content */
     line-height: 1.5; /* Set line height for readability */
-    text-align: left; /* Align text to the left */
+}
+
+/* Center the PayPal buttons */
+#paypal-button-container {
+    display: flex;
+    justify-content: center; /* Center the PayPal buttons */
+    gap: 10px; /* Optional: Add some space between the buttons */
+}
+
+button, select {
+    margin-bottom: 5px;
 }
